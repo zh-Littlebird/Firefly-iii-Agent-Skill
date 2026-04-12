@@ -47,7 +47,12 @@ scripts/firefly_client.py list <TOKEN>
 
 ### 步骤 2：解析交易信息
 
-**文字记账**：直接分析文字描述，提取交易详情，支持批量处理多笔交易
+**文字记账**：直接分析文字描述，提取交易详情，支持处理多笔交易
+
+**多笔交易拆分规则**：
+- **默认拆分**：当用户描述中包含多笔交易时，必须拆分为独立的交易分别提交（每笔一次 API 调用）
+- **合并例外**：仅当用户明确表示要合并为一笔交易时（如"合并记账"、"记为一笔"、"算在一起"），才将多笔交易合并为一个 group 提交
+- 拆分后每笔交易独立确认、独立提交，互不影响
 
 **图片记账**：利用多模态视觉能力识别图片内容，每张图片独立处理，严禁合并
 
@@ -150,12 +155,17 @@ scripts/firefly_client.py list <TOKEN>
 ### 步骤 4：提交交易
 
 ```bash
-# 单笔或多笔交易（JSON 字符串）
+# 单笔交易（JSON 字符串）
 scripts/firefly_client.py post <TOKEN> '<JSON_DATA>'
 
 # 或使用临时文件（数据量大时）
 scripts/firefly_client.py post <TOKEN> <FILE_PATH>
 ```
+
+**提交策略**：
+
+- **默认逐笔提交**：多笔交易时，对每笔交易分别调用一次 `post` 命令，确保每笔交易独立存储、独立管理
+- **合并提交**：仅当用户明确要求合并时，才将多笔交易放入同一个 JSON 数组一次性提交
 
 `firefly_client.py` 的 `post_transactions` 方法自动将单个 dict 包装为列表，并使用以下提交参数：
 - `error_if_duplicate_hash`: false
