@@ -160,18 +160,51 @@ Use `?page=N` to fetch subsequent pages. The `FireflyClient._get_all_pages()` me
 }
 ```
 
+Parameter rules:
+- Top-level request body must be an object with a `transactions` array.
+- Each array item is one split.
+- For a normal single transaction, pass exactly one split object.
+- Required split fields for create: `type`, `date`, `amount`, `description`, plus the account fields required by that transaction type.
+- `date` must be ISO 8601 with timezone.
+- `amount` must be a string, not a number.
+- For withdrawals, prefer `source_id` + `destination_id`.
+- For budgets, prefer `budget_id`.
+- For categories, prefer `category_id`; `category_name` is acceptable but less stable.
+- `tags` must be an array of tag name strings.
+
 ### Get Transaction
 `GET /api/v1/transactions/{id}`
+
+Parameter rules:
+- `{id}` is the top-level transaction group ID.
+- It is not the split-level `transaction_journal_id`.
+- Response contains one or more splits in `data.attributes.transactions[]`.
 
 ### Update Transaction
 `PUT /api/v1/transactions/{id}`
 
-Request body same structure as create.
+Parameter rules:
+- `{id}` is the top-level transaction group ID.
+- Request body is a `TransactionUpdate` object with a top-level `transactions` array.
+- Each array item is a split update object.
+- For a single-split transaction, you can update with one split object.
+- For a multi-split transaction, include every split you intend to keep, and include `transaction_journal_id` for each split.
+- If you omit `transaction_journal_id` in a multi-split update, Firefly may treat the payload as new splits or drop existing ones.
+- For reliable updates to budget/category/account fields, build the update from the original split returned by `GET`, then modify only the intended fields before sending `PUT`.
+- Prefer `budget_id` over `budget_name`.
+- Prefer `category_id` over `category_name`.
+- If both `category_id` and `category_name` are sent and they disagree, the ID wins.
+- `budget_name` should not be treated as the primary write field in update flows; use `budget_id`.
+- Success should be verified by reading the transaction back and checking the returned business fields, not only `updated_at`.
 
 ### Delete Transaction
 `DELETE /api/v1/transactions/{id}`
 
 Returns 204 No Content on success.
+
+Parameter rules:
+- `{id}` is the top-level transaction group ID.
+- Delete removes the whole transaction group.
 
 ### Date Format Requirements
 - Must be in ISO 8601 format with timezone
@@ -185,6 +218,12 @@ Returns 204 No Content on success.
 ### Tags Format
 - Array of tag name strings, not IDs
 - Example: `["Food", "Dining", "Takeaway"]`
+
+### Update Pitfalls
+- `PUT /transactions/{id}` updates split fields, not just a flat transaction object.
+- If your client already wraps the payload in `{"transactions":[...]}`, do not wrap it again in another outer object.
+- A request can return `200` and still leave budget/category unchanged if you pass an ignored field or an incomplete split payload.
+- The safest pattern is `GET -> construct full split payload -> PUT -> GET verify`.
 
 ## Search Endpoint
 `GET /api/v1/search/transactions?query={query}`
