@@ -27,6 +27,24 @@ class FireflyClient:
         "metadata": "Load the latest Firefly III metadata before assembling the request.",
         "transactions": "Choose existing accounts, categories, tags, and budgets before submitting the transaction.",
     }
+    INSIGHT_GROUPS = {
+        "expense": {
+            "expense", "asset", "bill", "no-bill", "budget",
+            "no-budget", "category", "no-category", "tag", "no-tag", "total",
+        },
+        "income": {
+            "revenue", "asset", "category", "no-category", "tag", "no-tag", "total",
+        },
+        "transfer": {
+            "asset", "category", "no-category", "tag", "no-tag", "total",
+        },
+    }
+    INSIGHT_FILTER_PARAMS = {
+        "bill": "bills[]",
+        "budget": "budgets[]",
+        "category": "categories[]",
+        "tag": "tags[]",
+    }
 
     def __init__(self, base_url, token, config=None):
         self.base_url = base_url.rstrip('/') + '/api/v1'
@@ -100,6 +118,21 @@ class FireflyClient:
                 continue
             cleaned[key] = value
         return cleaned
+
+    @staticmethod
+    def _parse_csv_ids(value):
+        if value in (None, "", "-"):
+            return None
+        if isinstance(value, (list, tuple, set)):
+            values = []
+            for item in value:
+                parsed = FireflyClient._parse_csv_ids(item)
+                if parsed:
+                    values.extend(parsed)
+            return values or None
+        parts = [item.strip() for item in str(value).split(",")]
+        values = [item for item in parts if item]
+        return values or None
 
     def _fetch_existing_resource_names(self):
         metadata = self.list_metadata()
@@ -578,13 +611,48 @@ class FireflyClient:
         return self._request("GET", "summary/basic", params=params)
 
     def get_expense_category_insight(self, start, end, categories=None, accounts=None):
+        return self.get_insight(
+            "expense",
+            "category",
+            start,
+            end,
+            filter_ids=categories,
+            accounts=accounts,
+        )
+
+    def get_insight(self, scope, group, start, end, filter_ids=None, accounts=None):
+        scope_key = str(scope or "").strip().lower()
+        group_key = str(group or "").strip().lower()
+
+        allowed_groups = self.INSIGHT_GROUPS.get(scope_key)
+        if not allowed_groups:
+            return {
+                "error": True,
+                "message": f"Unsupported insight scope '{scope}'. "
+                           f"Expected one of: {', '.join(sorted(self.INSIGHT_GROUPS))}."
+            }
+        if group_key not in allowed_groups:
+            return {
+                "error": True,
+                "message": f"Unsupported insight group '{group}' for scope '{scope_key}'. "
+                           f"Expected one of: {', '.join(sorted(allowed_groups))}."
+            }
+
         params = {
             "start": start,
             "end": end,
-            "categories[]": categories,
-            "accounts[]": accounts,
+            "accounts[]": self._parse_csv_ids(accounts),
         }
-        return self._request("GET", "insight/expense/category", params=params)
+        filter_param = self.INSIGHT_FILTER_PARAMS.get(group_key)
+        parsed_filter_ids = self._parse_csv_ids(filter_ids)
+        if parsed_filter_ids and not filter_param:
+            return {
+                "error": True,
+                "message": f"Insight group '{group_key}' does not accept extra filter IDs."
+            }
+        if filter_param:
+            params[filter_param] = parsed_filter_ids
+        return self._request("GET", f"insight/{scope_key}/{group_key}", params=params)
 
     def net_worth_summary(self, as_of=None, currency_code=None, start=None):
         end_date = self._coerce_date(as_of) or date.today()
@@ -880,13 +948,15 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print(
             "Usage: python3 firefly_client.py <action> <token> [data]\n"
-            "Actions: list, transactions, post, get, update, delete, search, "
+            "Actions: list, transactions, post, get, update, delete, search, bulk-update, "
             "accounts, account-get, account-create, account-update, account-delete, "
             "categories, category-get, category-create, category-update, category-delete, "
             "tags, tag-get, tag-create, tag-update, tag-delete, "
             "budgets, budget-get, budget-create, budget-update, budget-delete, "
-            "summary, budget-limits, chart-account, insight-expense-category, "
-            "autocomplete, bills, piggybanks, networth, report, trend"
+            "summary, budget-limits, chart-account, insight, insight-expense-category, "
+            "autocomplete, bills, bill-get, bill-create, bill-update, bill-delete, "
+            "piggybanks, piggybank-get, piggybank-create, piggybank-update, piggybank-delete, "
+            "attachment-create, attachment-upload, networth, report, trend"
         )
         sys.exit(1)
 
@@ -914,6 +984,8 @@ if __name__ == "__main__":
         print(json.dumps(client.post_transactions(sys.argv[3])))
     elif action == "search" and len(sys.argv) >= 4:
         print(json.dumps(client.search_transactions(sys.argv[3])))
+    elif action == "bulk-update" and len(sys.argv) >= 4:
+        print(json.dumps(client.bulk_update_transactions(sys.argv[3])))
     elif action == "get" and len(sys.argv) >= 4:
         print(json.dumps(client.get_transaction(sys.argv[3])))
     elif action == "update" and len(sys.argv) >= 5:
@@ -971,14 +1043,48 @@ if __name__ == "__main__":
     elif action == "chart-account" and len(sys.argv) >= 5:
         period = sys.argv[5] if len(sys.argv) >= 6 else None
         print(json.dumps(client.get_account_chart_overview(sys.argv[3], sys.argv[4], period=period)))
+    elif action == "insight" and len(sys.argv) >= 7:
+        filter_ids = sys.argv[7] if len(sys.argv) >= 8 else None
+        accounts = sys.argv[8] if len(sys.argv) >= 9 else None
+        print(json.dumps(client.get_insight(
+            sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6],
+            filter_ids=filter_ids, accounts=accounts
+        )))
     elif action == "insight-expense-category" and len(sys.argv) >= 5:
-        print(json.dumps(client.get_expense_category_insight(sys.argv[3], sys.argv[4])))
+        categories = sys.argv[5] if len(sys.argv) >= 6 else None
+        accounts = sys.argv[6] if len(sys.argv) >= 7 else None
+        print(json.dumps(client.get_expense_category_insight(
+            sys.argv[3], sys.argv[4], categories=categories, accounts=accounts
+        )))
     elif action == "autocomplete" and len(sys.argv) >= 5:
         print(json.dumps(client.autocomplete(sys.argv[3], sys.argv[4])))
     elif action == "bills":
         print(json.dumps(client.list_bills()))
+    elif action == "bill-get" and len(sys.argv) >= 4:
+        print(json.dumps(client.get_bill(sys.argv[3])))
+    elif action == "bill-create" and len(sys.argv) >= 4:
+        print(json.dumps(client.create_bill(sys.argv[3])))
+    elif action == "bill-update" and len(sys.argv) >= 5:
+        print(json.dumps(client.update_bill(sys.argv[3], sys.argv[4])))
+    elif action == "bill-delete" and len(sys.argv) >= 4:
+        print(json.dumps(client.delete_bill(sys.argv[3])))
     elif action == "piggybanks":
         print(json.dumps(client.list_piggy_banks()))
+    elif action == "piggybank-get" and len(sys.argv) >= 4:
+        print(json.dumps(client.get_piggy_bank(sys.argv[3])))
+    elif action == "piggybank-create" and len(sys.argv) >= 4:
+        print(json.dumps(client.create_piggy_bank(sys.argv[3])))
+    elif action == "piggybank-update" and len(sys.argv) >= 5:
+        print(json.dumps(client.update_piggy_bank(sys.argv[3], sys.argv[4])))
+    elif action == "piggybank-delete" and len(sys.argv) >= 4:
+        print(json.dumps(client.delete_piggy_bank(sys.argv[3])))
+    elif action == "attachment-create" and len(sys.argv) >= 6:
+        title = sys.argv[6] if len(sys.argv) >= 7 else None
+        print(json.dumps(client.create_attachment(
+            sys.argv[3], sys.argv[4], sys.argv[5], title=title
+        )))
+    elif action == "attachment-upload" and len(sys.argv) >= 5:
+        print(json.dumps(client.upload_attachment(sys.argv[3], sys.argv[4])))
     elif action == "networth":
         # Usage: networth <token> [YYYY-MM-DD] [CURRENCY_CODE]
         as_of = sys.argv[3] if len(sys.argv) >= 4 else None

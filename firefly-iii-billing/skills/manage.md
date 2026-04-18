@@ -68,4 +68,14 @@ scripts/firefly_client.py autocomplete <TOKEN> <RESOURCE_TYPE> '<QUERY>'
 
 ## 批量更新交易
 
-通过 Python API 调用 `client.bulk_update_transactions(data)` 批量更新交易记录。
+```bash
+scripts/firefly_client.py bulk-update <TOKEN> '<JSON_DATA>'
+```
+
+适用场景：
+- 批量修正账户、分类、预算、标签等字段
+- 导入后集中整理一批历史流水
+
+说明：
+- 提交内容直接透传到 `POST /v1/data/bulk/transactions`
+- 创建新交易仍使用 `post`，这里仅用于批量更新已有交易

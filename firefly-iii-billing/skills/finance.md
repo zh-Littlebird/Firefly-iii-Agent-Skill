@@ -6,24 +6,44 @@
 
 ```bash
 scripts/firefly_client.py bills <TOKEN>
+
+# 详情
+scripts/firefly_client.py bill-get <TOKEN> <BILL_ID>
+
+# 创建
+scripts/firefly_client.py bill-create <TOKEN> '<JSON_DATA>'
+
+# 更新
+scripts/firefly_client.py bill-update <TOKEN> <BILL_ID> '<JSON_DATA>'
+
+# 删除
+scripts/firefly_client.py bill-delete <TOKEN> <BILL_ID>
 ```
 
 查看所有账单，支持周期性支出（房租、会员费、保险等）关联。
-
-> Python API 还支持 `create_bill`、`update_bill`、`delete_bill`，可通过 `python3 -c` 调用。
 
 ## 存钱罐管理
 
 ```bash
 scripts/firefly_client.py piggybanks <TOKEN>
+
+# 详情
+scripts/firefly_client.py piggybank-get <TOKEN> <PIGGY_BANK_ID>
+
+# 创建
+scripts/firefly_client.py piggybank-create <TOKEN> '<JSON_DATA>'
+
+# 更新
+scripts/firefly_client.py piggybank-update <TOKEN> <PIGGY_BANK_ID> '<JSON_DATA>'
+
+# 删除
+scripts/firefly_client.py piggybank-delete <TOKEN> <PIGGY_BANK_ID>
 ```
 
 查看所有存钱罐，支持储蓄目标场景（如"往旅行基金存了500"）。
 
 `FIREFLY_III_AUTO_CREATE_PIGGY_BANKS` 约束的是交易/归属流程里的隐式自动新建，不拦截用户明确要求的显式创建。
 若 `FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=false`，在涉及存钱罐归属或选择时，必须先调用 `piggybanks` 或 `autocomplete piggy-banks` 读取已有列表，并从现有存钱罐中选择；无匹配项时向用户展示现有选项，而不是继续隐式创建。
-
-> Python API 还支持 `create_piggy_bank`、`update_piggy_bank`、`delete_piggy_bank`，可通过 `python3 -c` 调用。
 
 ## 标签管理
 
@@ -53,17 +73,12 @@ client.update_tag_description(tag_id, "new description")
 
 ## 附件上传
 
-通过 Python API 将小票/发票原图关联到交易记录：
+通过 CLI 将小票/发票原图关联到交易记录：
 
-```python
+```bash
 # 1. 创建附件元数据
-attachment = client.create_attachment(
-    attachable_type="TransactionJournal",
-    attachable_id=journal_id,
-    filename="receipt.jpg",
-    title="消费小票"
-)
+scripts/firefly_client.py attachment-create <TOKEN> TransactionJournal <JOURNAL_ID> receipt.jpg '消费小票'
 
-# 2. 上传文件
-client.upload_attachment(attachment['data']['id'], "/path/to/receipt.jpg")
+# 2. 上传文件内容
+scripts/firefly_client.py attachment-upload <TOKEN> <ATTACHMENT_ID> /path/to/receipt.jpg
 ```

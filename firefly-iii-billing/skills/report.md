@@ -39,10 +39,62 @@ scripts/firefly_client.py chart-account <TOKEN> <START> <END> [PERIOD]
 - `PERIOD` 可选，常见值：`1D`、`1W`、`1M`、`3M`、`6M`、`1Y`
 - 这是官方图表数据，不要再用 `trend` 冒充账户趋势
 
+## 洞察矩阵
+
+```bash
+scripts/firefly_client.py insight <TOKEN> <SCOPE> <GROUP> <START> <END> [FILTER_IDS] [ACCOUNT_IDS]
+```
+
+对应接口：
+- `GET /v1/insight/expense/*`
+- `GET /v1/insight/income/*`
+- `GET /v1/insight/transfer/*`
+
+参数说明：
+- `SCOPE`：`expense`、`income`、`transfer`
+- `GROUP`：
+  - `expense` 支持：`expense`、`asset`、`bill`、`no-bill`、`budget`、`no-budget`、`category`、`no-category`、`tag`、`no-tag`、`total`
+  - `income` 支持：`revenue`、`asset`、`category`、`no-category`、`tag`、`no-tag`、`total`
+  - `transfer` 支持：`asset`、`category`、`no-category`、`tag`、`no-tag`、`total`
+- `FILTER_IDS`：可选，逗号分隔 ID 列表，仅以下分组可用：
+  - `bill` → 账单 ID
+  - `budget` → 预算 ID
+  - `category` → 分类 ID
+  - `tag` → 标签 ID
+- `ACCOUNT_IDS`：可选，逗号分隔账户 ID 列表，用于限定资产/负债账户范围
+- 不需要某个可选参数时可省略，或传 `-`
+
+适用场景：
+- “这个月各分类花了多少”
+- “哪些支出没有预算 / 没有关联账单 / 没打标签”
+- “这段时间收入按来源账户怎么分布”
+- “最近几个月转账按标签或账户怎么看”
+
+使用规则：
+- 优先使用官方 insight 接口，不要先拉全量交易再本地分组
+- `no-*` 分组用于查漏配数据，适合做记账质量检查
+- `total` 用于直接拿官方总额，不要自己二次汇总
+
+示例：
+
+```bash
+# 支出按预算聚合
+scripts/firefly_client.py insight <TOKEN> expense budget 2026-04-01 2026-04-18
+
+# 查询没有预算的支出
+scripts/firefly_client.py insight <TOKEN> expense no-budget 2026-04-01 2026-04-18
+
+# 收入按标签聚合，只看指定账户
+scripts/firefly_client.py insight <TOKEN> income tag 2026-04-01 2026-04-18 - 1,2
+
+# 转账总额
+scripts/firefly_client.py insight <TOKEN> transfer total 2026-04-01 2026-04-18
+```
+
 ## 支出分类洞察
 
 ```bash
-scripts/firefly_client.py insight-expense-category <TOKEN> <START> <END>
+scripts/firefly_client.py insight-expense-category <TOKEN> <START> <END> [CATEGORY_IDS] [ACCOUNT_IDS]
 ```
 
 对应接口：
@@ -56,6 +108,7 @@ scripts/firefly_client.py insight-expense-category <TOKEN> <START> <END>
 使用规则：
 - 优先使用这个接口，而不是先拉全量交易再本地按分类汇总
 - 如需补充解释，再回查 `transactions`
+- 新场景优先使用通用 `insight` 命令；这里保留是为了兼容已有调用方式
 
 ## 预算列表
 
