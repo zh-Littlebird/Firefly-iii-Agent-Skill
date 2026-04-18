@@ -70,6 +70,11 @@ class FireflyClient:
         return cls(config['FIREFLY_III_BASE_URL'], config['FIREFLY_III_ACCESS_TOKEN'], config=config)
 
     @classmethod
+    def from_cli_token(cls, token, config_path=None):
+        config = cls.load_config(config_path)
+        return cls(config['FIREFLY_III_BASE_URL'], token, config=config)
+
+    @classmethod
     def get_auto_create_settings(cls, config_path=None):
         config = cls.load_config(config_path)
         return {
@@ -80,10 +85,10 @@ class FireflyClient:
             "piggy_banks": config["FIREFLY_III_AUTO_CREATE_PIGGY_BANKS"],
         }
 
-    def _policy_error(self, resource, detail, candidates=None):
+    def _policy_error(self, resource, detail, candidates=None, code="AUTO_CREATE_DISABLED"):
         payload = {
             "error": True,
-            "code": "AUTO_CREATE_DISABLED",
+            "code": code,
             "resource": resource,
             "message": detail,
             "hint": self.RESOURCE_SELECTION_HINTS.get(resource),
@@ -100,6 +105,12 @@ class FireflyClient:
     @staticmethod
     def _normalize_name(value):
         return value.strip().lower() if isinstance(value, str) else ""
+
+    @staticmethod
+    def _normalize_identifier(value):
+        if value is None:
+            return ""
+        return str(value).strip()
 
     @staticmethod
     def _endpoint_root(endpoint):
@@ -134,28 +145,51 @@ class FireflyClient:
         values = [item for item in parts if item]
         return values or None
 
-    def _fetch_existing_resource_names(self):
-        metadata = self.list_metadata()
-        if not isinstance(metadata, dict):
-            return None, self._policy_error(
-                "metadata",
-                "Failed to load Firefly III metadata while enforcing auto-create policy."
-            )
-
-        normalized = {}
-        for resource in ("accounts", "categories", "tags", "budgets"):
-            items = metadata.get(resource, [])
-            if not isinstance(items, list):
-                return None, self._policy_error(
-                    resource,
-                    f"Failed to load {resource} metadata while enforcing auto-create policy."
-                )
-            normalized[resource] = {
-                self._normalize_name(self._extract_attr_name(item))
-                for item in items
-                if self._normalize_name(self._extract_attr_name(item))
+    def _fetch_existing_resource_catalog(self):
+        endpoints = {
+            "accounts": "accounts",
+            "categories": "categories",
+            "tags": "tags",
+            "budgets": "budgets",
+        }
+        catalog = {}
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            futures = {
+                executor.submit(self._get_all_pages, endpoint): resource
+                for resource, endpoint in endpoints.items()
             }
-        return normalized, None
+            for future in as_completed(futures):
+                resource = futures[future]
+                try:
+                    items = future.result()
+                except Exception:
+                    return None, self._policy_error(
+                        resource,
+                        f"Failed to load {resource} metadata while enforcing auto-create policy."
+                    )
+                if isinstance(items, dict) and items.get("error"):
+                    return None, self._policy_error(
+                        resource,
+                        f"Failed to load {resource} metadata while enforcing auto-create policy."
+                    )
+                if not isinstance(items, list):
+                    return None, self._policy_error(
+                        resource,
+                        f"Failed to load {resource} metadata while enforcing auto-create policy."
+                    )
+                catalog[resource] = {
+                    "ids": {
+                        self._normalize_identifier(item.get("id"))
+                        for item in items
+                        if isinstance(item, dict) and self._normalize_identifier(item.get("id"))
+                    },
+                    "names": {
+                        self._normalize_name(self._extract_attr_name(item))
+                        for item in items
+                        if isinstance(item, dict) and self._normalize_name(self._extract_attr_name(item))
+                    },
+                }
+        return catalog, None
 
     @staticmethod
     def _sample_candidates(values, limit=10):
@@ -174,7 +208,7 @@ class FireflyClient:
         if not needs_validation:
             return None
 
-        existing, error = self._fetch_existing_resource_names()
+        existing, error = self._fetch_existing_resource_catalog()
         if error:
             return error
 
@@ -192,31 +226,53 @@ class FireflyClient:
                 return self._policy_error("transactions", "Invalid transaction payload entry.")
 
             if not self.config["FIREFLY_III_AUTO_CREATE_ACCOUNTS"]:
+                for field in ("source_id", "destination_id"):
+                    resource_id = self._normalize_identifier(tx.get(field))
+                    if resource_id and resource_id not in existing["accounts"]["ids"]:
+                        return self._policy_error(
+                            "accounts",
+                            f"Auto-create disabled: transaction references missing account id '{tx.get(field)}'.",
+                            candidates=self._sample_candidates(existing["accounts"]["names"])
+                        )
                 for field in ("source_name", "destination_name"):
                     name = self._normalize_name(tx.get(field, ""))
-                    if name and name not in existing["accounts"]:
+                    if name and name not in existing["accounts"]["names"]:
                         return self._policy_error(
                             "accounts",
                             f"Auto-create disabled: transaction references missing account '{tx.get(field)}'.",
-                            candidates=self._sample_candidates(existing["accounts"])
+                            candidates=self._sample_candidates(existing["accounts"]["names"])
                         )
 
             if not self.config["FIREFLY_III_AUTO_CREATE_CATEGORIES"]:
+                category_id = self._normalize_identifier(tx.get("category_id"))
+                if category_id and category_id not in existing["categories"]["ids"]:
+                    return self._policy_error(
+                        "categories",
+                        f"Auto-create disabled: transaction references missing category id '{tx.get('category_id')}'.",
+                        candidates=self._sample_candidates(existing["categories"]["names"])
+                    )
                 name = self._normalize_name(tx.get("category_name", ""))
-                if name and name not in existing["categories"]:
+                if name and name not in existing["categories"]["names"]:
                     return self._policy_error(
                         "categories",
                         f"Auto-create disabled: transaction references missing category '{tx.get('category_name')}'.",
-                        candidates=self._sample_candidates(existing["categories"])
+                        candidates=self._sample_candidates(existing["categories"]["names"])
                     )
 
             if not self.config["FIREFLY_III_AUTO_CREATE_BUDGETS"]:
+                budget_id = self._normalize_identifier(tx.get("budget_id"))
+                if budget_id and budget_id not in existing["budgets"]["ids"]:
+                    return self._policy_error(
+                        "budgets",
+                        f"Auto-create disabled: transaction references missing budget id '{tx.get('budget_id')}'.",
+                        candidates=self._sample_candidates(existing["budgets"]["names"])
+                    )
                 name = self._normalize_name(tx.get("budget_name", ""))
-                if name and name not in existing["budgets"]:
+                if name and name not in existing["budgets"]["names"]:
                     return self._policy_error(
                         "budgets",
                         f"Auto-create disabled: transaction references missing budget '{tx.get('budget_name')}'.",
-                        candidates=self._sample_candidates(existing["budgets"])
+                        candidates=self._sample_candidates(existing["budgets"]["names"])
                     )
 
             if not self.config["FIREFLY_III_AUTO_CREATE_TAGS"]:
@@ -224,25 +280,135 @@ class FireflyClient:
                 if not isinstance(tags, list):
                     return self._policy_error("tags", "Transaction tags must be a list.")
                 for tag in tags:
-                    tag_name = tag if isinstance(tag, str) else tag.get("tag", "")
+                    if isinstance(tag, str):
+                        tag_name = tag
+                        tag_id = ""
+                    elif isinstance(tag, dict):
+                        tag_name = tag.get("tag", "") or tag.get("name", "")
+                        tag_id = self._normalize_identifier(tag.get("id"))
+                    else:
+                        return self._policy_error("tags", "Each tag must be a string or object.")
+                    if tag_id and tag_id not in existing["tags"]["ids"]:
+                        return self._policy_error(
+                            "tags",
+                            f"Auto-create disabled: transaction references missing tag id '{tag_id}'.",
+                            candidates=self._sample_candidates(existing["tags"]["names"])
+                        )
                     normalized = self._normalize_name(tag_name)
-                    if normalized and normalized not in existing["tags"]:
+                    if normalized and normalized not in existing["tags"]["names"]:
                         return self._policy_error(
                             "tags",
                             f"Auto-create disabled: transaction references missing tag '{tag_name}'.",
-                            candidates=self._sample_candidates(existing["tags"])
+                            candidates=self._sample_candidates(existing["tags"]["names"])
                         )
 
+        return None
+
+    def _ensure_transaction_update_shape(self, payload):
+        if isinstance(payload, list):
+            transactions = payload
+        else:
+            transactions = payload.get("transactions", payload)
+        if isinstance(transactions, dict):
+            transactions = [transactions]
+        if not isinstance(transactions, list):
+            return self._policy_error("transactions", "Invalid transaction payload.")
+        if len(transactions) <= 1:
+            return None
+
+        for tx in transactions:
+            if not isinstance(tx, dict):
+                return self._policy_error("transactions", "Invalid transaction payload entry.")
+            if not self._normalize_identifier(tx.get("transaction_journal_id")):
+                return self._policy_error(
+                    "transactions",
+                    "Split transaction updates must include transaction_journal_id for every split.",
+                    code="SPLIT_UPDATE_REQUIRES_TRANSACTION_JOURNAL_ID"
+                )
+        return None
+
+    def _ensure_bulk_transaction_update_allowed(self, payload):
+        operations = payload if isinstance(payload, list) else [payload]
+        if not isinstance(operations, list):
+            return self._policy_error(
+                "transactions",
+                "Invalid bulk transaction update payload.",
+                code="UNSUPPORTED_BULK_UPDATE"
+            )
+
+        existing_accounts, error = self._fetch_existing_resource_catalog()
+        if error:
+            return error
+
+        for operation in operations:
+            if not isinstance(operation, dict):
+                return self._policy_error(
+                    "transactions",
+                    "Bulk transaction update payload entries must be objects.",
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
+            where = operation.get("where")
+            update = operation.get("update")
+            if not isinstance(where, dict) or not isinstance(update, dict):
+                return self._policy_error(
+                    "transactions",
+                    "Bulk transaction update payload must contain object fields 'where' and 'update'.",
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
+
+            unsupported_where = sorted(key for key in where if key != "account_id")
+            unsupported_update = sorted(key for key in update if key != "account_id")
+            if unsupported_where or unsupported_update:
+                details = []
+                if unsupported_where:
+                    details.append(f"where={unsupported_where}")
+                if unsupported_update:
+                    details.append(f"update={unsupported_update}")
+                return self._policy_error(
+                    "transactions",
+                    "Bulk transaction update currently supports only account_id in both where/update. "
+                    + "; ".join(details),
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
+
+            where_account_id = self._normalize_identifier(where.get("account_id"))
+            update_account_id = self._normalize_identifier(update.get("account_id"))
+            if not where_account_id or not update_account_id:
+                return self._policy_error(
+                    "transactions",
+                    "Bulk transaction update requires non-empty where.account_id and update.account_id.",
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
+            if where_account_id not in existing_accounts["accounts"]["ids"]:
+                return self._policy_error(
+                    "accounts",
+                    f"Bulk transaction update references missing account id '{where_account_id}'.",
+                    candidates=self._sample_candidates(existing_accounts["accounts"]["names"]),
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
+            if update_account_id not in existing_accounts["accounts"]["ids"]:
+                return self._policy_error(
+                    "accounts",
+                    f"Bulk transaction update references missing account id '{update_account_id}'.",
+                    candidates=self._sample_candidates(existing_accounts["accounts"]["names"]),
+                    code="UNSUPPORTED_BULK_UPDATE"
+                )
         return None
 
     def _enforce_auto_create_policy(self, method, endpoint, data=None):
         root = self._endpoint_root(endpoint)
 
-        if root == "transactions" and method in {"POST", "PUT"} and data:
+        if root == "transactions" and method == "PUT" and data:
+            shape_error = self._ensure_transaction_update_shape(data)
+            if shape_error:
+                return shape_error
+            return self._ensure_transaction_references_allowed(data)
+
+        if root == "transactions" and method == "POST" and data:
             return self._ensure_transaction_references_allowed(data)
 
         if endpoint.startswith("data/bulk/transactions") and method == "POST" and data:
-            return self._ensure_transaction_references_allowed(data)
+            return self._ensure_bulk_transaction_update_allowed(data)
 
         return None
 
@@ -1018,13 +1184,10 @@ if __name__ == "__main__":
 
     config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config.json')
     try:
-        cfg = FireflyClient.load_config(config_path)
-        base_url = cfg['FIREFLY_III_BASE_URL']
+        client = FireflyClient.from_cli_token(token, config_path=config_path)
     except (FileNotFoundError, KeyError):
         print("Error: config.json not found or missing FIREFLY_III_BASE_URL. See config.example.json.", file=sys.stderr)
         sys.exit(1)
-
-    client = FireflyClient(base_url, token)
 
     if action == "list":
         print(json.dumps(client.list_metadata()))

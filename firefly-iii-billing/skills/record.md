@@ -20,6 +20,7 @@ scripts/firefly_client.py list <TOKEN>
   - `FIREFLY_III_AUTO_CREATE_BUDGETS`
 - 以上开关默认均为 `true`；当对应开关为 `false` 时，`FireflyClient` 会强制拒绝会触发新建的提交，不能绕过
 - **强制流程**：只要任一相关开关为 `false`，就必须先读取已有列表，再从列表中选择；不能直接把新的账户名、分类名、标签名、预算名写进交易 payload
+- **禁止猜测 ID**：只要任一相关开关为 `false`，就不能凭感觉填写 `source_id`、`destination_id`、`category_id`、`budget_id`、标签 ID；这些值必须来自刚刚读取的元数据结果
 - 若列表中没有合适项，则先向用户展示可选项并让用户改选；不要继续提交会失败的请求
 - 当候选项较多时，优先使用 `autocomplete` 缩小范围，再从返回结果中选择
 - 当不确定支出账户时需要询问用户
@@ -155,6 +156,7 @@ scripts/firefly_client.py post <TOKEN> <FILE_PATH>
 - **默认逐笔提交**：多笔独立交易时，对每笔交易分别调用一次 `post` 命令，每次提交的 JSON 中只包含**一个** transaction 对象，确保每笔交易独立存储、独立管理
 - **拆分交易提交**：仅当**单笔交易需要按多种分类拆分金额**时，才在一次 `post` 调用中提交包含多个 transaction 对象的 JSON 数组（这些对象共享同一日期、源账户等，但各自有不同的金额和分类）
 - **合并提交**：仅当用户明确要求合并时（如"记为一笔"），才将多笔交易放入同一个 JSON 数组一次性提交
+- **安全优先**：若账户/分类/预算/标签有任何一项未完成现有对象解析，就不要调用 `post`；先停下来向用户确认候选项
 
 `firefly_client.py` 的 `post_transactions` 方法自动将单个 dict 包装为列表，并使用以下提交参数：
 - `error_if_duplicate_hash`: false

@@ -73,12 +73,18 @@ scripts/firefly_client.py bulk-update <TOKEN> '<JSON_DATA>'
 ```
 
 适用场景：
-- 批量修正账户、分类、预算、标签等字段
+- 仅用于把一批交易上的账户 ID 从 A 改到 B
 - 导入后集中整理一批历史流水
 
 说明：
-- 提交内容直接透传到 `POST /v1/data/bulk/transactions`
+- 该端点当前只支持 `where.account_id` / `update.account_id`
+- 不支持批量修改分类、预算、标签；这些需求不要走 `bulk-update`
 - 创建新交易仍使用 `post`，这里仅用于批量更新已有交易
+
+## 更新拆分交易
+
+- 若一次 `update` 请求里包含多个 split，必须为每个 split 提交 `transaction_journal_id`
+- 少任何一个 split 的 `transaction_journal_id` 都不要提交，否则 Firefly III 可能删除原 split 或把修改当成新 split 创建
 
 ## 预算相关交易查询
 

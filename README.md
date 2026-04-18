@@ -66,7 +66,7 @@ firefly-iii-billing/
    }
    ```
 
-   以上自动新建开关默认都为 `true`。设为 `false` 后，`FireflyClient` 会在代码层直接拒绝对应创建请求，以及会触发隐式新建的交易提交/更新请求。
+   以上自动新建开关默认都为 `true`。设为 `false` 后，`FireflyClient` 会在代码层直接拒绝对应创建请求，以及会触发隐式新建的交易提交/更新请求。CLI 和 Python API 都会执行这些开关。
 
 3. **在 Claude Code 中注册 skill**
 
@@ -97,6 +97,9 @@ python3 scripts/firefly_client.py delete <TOKEN> <TRANSACTION_ID>
 
 # 搜索交易
 python3 scripts/firefly_client.py search <TOKEN> '<QUERY>'
+
+# 批量更新交易（仅支持 account_id -> account_id）
+python3 scripts/firefly_client.py bulk-update <TOKEN> '<JSON_DATA>'
 
 # 列出账户
 python3 scripts/firefly_client.py accounts <TOKEN> [TYPE]
@@ -248,6 +251,10 @@ transactions_without_budget = client.list_transactions_without_budget("2026-04-0
 - `config.json` 包含敏感的 Access Token，已在 `.gitignore` 中排除
 - 请勿将 Access Token 硬编码在代码中或提交到版本控制
 - 建议定期轮换 Firefly III 的 Personal Access Token
+- 当任一自动新建开关为 `false` 时，必须先读取现有账户/分类/标签/预算列表，再从返回结果中选择；不能直接提交未知名称
+- 当任一自动新建开关为 `false` 时，也不能猜测 `source_id`、`destination_id`、`category_id`、`budget_id` 或标签 ID；脚本会校验这些 ID 是否真实存在
+- `bulk-update` 目前只支持 `where.account_id` 和 `update.account_id`；不要用它批量改分类、预算或标签
+- 更新拆分交易时，若一次请求包含多个 split，必须给每个 split 提交 `transaction_journal_id`
 
 ## License
 
