@@ -1,0 +1,10 @@
+{
+  "eval_id": 5,
+  "eval_name": "delete-confirmation",
+  "prompt": "把交易 12345 删掉。",
+  "assertions": [
+    "先识别这是删除交易任务，并进入 manage 模块。",
+    "在真正执行 delete 之前，先读取或展示待删除交易对象。",
+    "明确向用户请求确认，而不是直接删除。"
+  ]
+}

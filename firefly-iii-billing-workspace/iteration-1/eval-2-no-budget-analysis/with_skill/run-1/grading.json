@@ -1,0 +1,63 @@
+{
+  "expectations": [
+    {
+      "text": "先识别这是预算漏挂分析任务，并进入 report 模块。",
+      "passed": true,
+      "evidence": "response.md 首行明确进入 `skills/report.md`。"
+    },
+    {
+      "text": "优先使用官方 insight no-budget 或 transactions-without-budget 能力，而不是先拉全量交易做本地聚合。",
+      "passed": true,
+      "evidence": "response.md 推荐的第一条命令是 `insight expense no-budget`，第二条是 `transactions-without-budget`。"
+    },
+    {
+      "text": "结果同时覆盖总额和漏挂预算的交易明细或回查路径。",
+      "passed": true,
+      "evidence": "response.md 分别列出了“总额”和“明细”两类结果目标。"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  },
+  "execution_metrics": {
+    "tool_calls": {
+      "Read": 3,
+      "Write": 2,
+      "Bash": 0
+    },
+    "total_tool_calls": 5,
+    "total_steps": 3,
+    "errors_encountered": 0,
+    "output_chars": 2680,
+    "transcript_chars": 620
+  },
+  "timing": {
+    "total_tokens": 1020,
+    "duration_ms": 3900,
+    "total_duration_seconds": 3.9
+  },
+  "claims": [
+    {
+      "claim": "该技能会优先使用官方分析接口处理 no-budget 查询",
+      "type": "process",
+      "verified": true,
+      "evidence": "response.md 和 transcript.md 都明确说明不先拉全量交易本地聚合。"
+    }
+  ],
+  "user_notes_summary": {
+    "uncertainties": [
+      "由于没有真实实例和配置，本轮没有得到实际金额。"
+    ],
+    "needs_review": [],
+    "workarounds": [
+      "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+    ]
+  },
+  "eval_feedback": {
+    "overall": "No suggestions, evals look solid",
+    "suggestions": []
+  }
+}

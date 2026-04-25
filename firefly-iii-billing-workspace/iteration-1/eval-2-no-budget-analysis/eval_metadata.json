@@ -1,0 +1,10 @@
+{
+  "eval_id": 2,
+  "eval_name": "no-budget-analysis",
+  "prompt": "查一下 2026-04-01 到 2026-04-18 这段时间哪些支出没有挂预算，再告诉我总共有多少钱。",
+  "assertions": [
+    "先识别这是预算漏挂分析任务，并进入 report 模块。",
+    "优先使用官方 insight no-budget 或 transactions-without-budget 能力，而不是先拉全量交易做本地聚合。",
+    "结果同时覆盖总额和漏挂预算的交易明细或回查路径。"
+  ]
+}

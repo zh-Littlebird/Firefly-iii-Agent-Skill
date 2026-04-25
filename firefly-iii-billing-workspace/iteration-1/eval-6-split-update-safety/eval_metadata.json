@@ -1,0 +1,10 @@
+{
+  "eval_id": 6,
+  "eval_name": "split-update-safety",
+  "prompt": "把交易组 4567 里两条 split 都改到新的预算 12，分类都改成 34；不要改金额和描述。",
+  "assertions": [
+    "先读取原交易详情，而不是直接盲写 update payload。",
+    "如果是多 split 更新，保留每个 split 的 transaction_journal_id。",
+    "更新 payload 以原 split 为底稿，只改预算和分类相关字段。"
+  ]
+}

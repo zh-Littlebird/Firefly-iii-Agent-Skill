@@ -1,0 +1,303 @@
+{
+  "metadata": {
+    "skill_name": "firefly-iii-billing",
+    "skill_path": "/Users/huhu/VSCodeProjects/where-is-my-money/firefly-iii-billing",
+    "executor_model": "manual-inline-evaluation",
+    "analyzer_model": "manual-inline-evaluation",
+    "timestamp": "2026-04-19T02:32:40Z",
+    "evals_run": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "runs_per_configuration": 1
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 4.1,
+        "tokens": 2520,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先识别这是新增交易/补账任务，并进入 record 模块。",
+          "passed": true,
+          "evidence": "response.md 首行明确写出“新增交易 / 补账（文字记账，进入 skills/record.md）”。"
+        },
+        {
+          "text": "在缺少精确时间时，不直接用 00:00:00 占位，而是要求用户确认具体时间。",
+          "passed": true,
+          "evidence": "response.md 写明“还缺一个关键字段：精确时间”，且没有出现 00:00:00 占位。"
+        },
+        {
+          "text": "在提交前给出结构化确认信息，而不是直接调用 post。",
+          "passed": true,
+          "evidence": "response.md 以“待你确认”收尾，没有出现直接提交或 post 命令。"
+        }
+      ],
+      "notes": [
+        "未连接真实 Firefly III 实例，因此没有继续做元数据匹配或实际提交。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 3.9,
+        "tokens": 2680,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先识别这是预算漏挂分析任务，并进入 report 模块。",
+          "passed": true,
+          "evidence": "response.md 首行明确进入 `skills/report.md`。"
+        },
+        {
+          "text": "优先使用官方 insight no-budget 或 transactions-without-budget 能力，而不是先拉全量交易做本地聚合。",
+          "passed": true,
+          "evidence": "response.md 推荐的第一条命令是 `insight expense no-budget`，第二条是 `transactions-without-budget`。"
+        },
+        {
+          "text": "结果同时覆盖总额和漏挂预算的交易明细或回查路径。",
+          "passed": true,
+          "evidence": "response.md 分别列出了“总额”和“明细”两类结果目标。"
+        }
+      ],
+      "notes": [
+        "由于没有真实实例和配置，本轮没有得到实际金额。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 3.6,
+        "tokens": 2360,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先识别这是分类主数据维护任务，并进入 masterdata 模块。",
+          "passed": true,
+          "evidence": "response.md 首行明确进入 `skills/masterdata.md`。"
+        },
+        {
+          "text": "不会直接猜测分类 ID，而是先列出候选分类或做自动补全。",
+          "passed": true,
+          "evidence": "response.md 第 1 条写明先读取列表或 autocomplete，而不是直接写 category-update。"
+        },
+        {
+          "text": "在执行更新前明确说明将被修改的对象。",
+          "passed": true,
+          "evidence": "response.md 第 2 条列出了将被修改的对象及拟变更内容。"
+        }
+      ],
+      "notes": [
+        "未连接实例，因此没有真实候选分类结果。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 4,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 3.5,
+        "tokens": 2290,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "识别到自动新建受限时，先读取元数据或自动补全结果。",
+          "passed": true,
+          "evidence": "response.md 明确写出“不会直接把 commute-plus 和 metro-urgent 塞进交易 payload”。"
+        },
+        {
+          "text": "不会臆造预算 ID、标签 ID 或直接提交新的预算名/标签名。",
+          "passed": true,
+          "evidence": "response.md 第 1 步先调用 budgets/tags 的 autocomplete。"
+        },
+        {
+          "text": "若无精确匹配，会向用户展示现有候选项并暂停提交。",
+          "passed": true,
+          "evidence": "response.md 第 2 步写明若无精确匹配则展示候选项并暂停提交。"
+        }
+      ],
+      "notes": [
+        "没有真实元数据列表，因此本轮只验证交互策略。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 5,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 3.2,
+        "tokens": 2010,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先识别这是删除交易任务，并进入 manage 模块。",
+          "passed": true,
+          "evidence": "response.md 首行明确进入 `skills/manage.md`。"
+        },
+        {
+          "text": "在真正执行 delete 之前，先读取或展示待删除交易对象。",
+          "passed": true,
+          "evidence": "response.md 第 1 步先调用 `get 12345`。"
+        },
+        {
+          "text": "明确向用户请求确认，而不是直接删除。",
+          "passed": true,
+          "evidence": "response.md 写明“确认无误后，我才会执行 delete 12345”。"
+        }
+      ],
+      "notes": [
+        "真实实例未连接，所以不能展示交易 12345 的实际内容。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 6,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 3.8,
+        "tokens": 2480,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先读取原交易详情，而不是直接盲写 update payload。",
+          "passed": true,
+          "evidence": "response.md 第 1 步先调用 `get 4567`。"
+        },
+        {
+          "text": "如果是多 split 更新，保留每个 split 的 transaction_journal_id。",
+          "passed": true,
+          "evidence": "response.md 第 2 步明确列出了 `transaction_journal_id` 必须保留。"
+        },
+        {
+          "text": "更新 payload 以原 split 为底稿，只改预算和分类相关字段。",
+          "passed": true,
+          "evidence": "response.md 第 3 步写明仅改 `budget_id` 和 `category_id`，保留原金额和描述。"
+        }
+      ],
+      "notes": [
+        "没有真实交易组返回体，因此没能构造最终 JSON 示例。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    },
+    {
+      "eval_id": 7,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.67,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 3.4,
+        "tokens": 2140,
+        "tool_calls": 5,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "先识别这是图片记账任务，并进入 record 模块。",
+          "passed": true,
+          "evidence": "response.md 首行明确进入 `skills/record.md` 的图片记账流程。"
+        },
+        {
+          "text": "在提交前展示识别结果供用户确认。",
+          "passed": false,
+          "evidence": "本轮评测没有真实图片文件，因此 `response.md` 只能描述“有图片时会先展示识别结果”，没有实际展示识别结果。"
+        },
+        {
+          "text": "若时间无法可靠识别，会明确标出缺少时间字段，而不是默认补零点时间。",
+          "passed": true,
+          "evidence": "response.md 明确写出“不会默认补成 00:00:00”。"
+        }
+      ],
+      "notes": [
+        "本 eval 缺少实际图片附件，无法验证视觉识别质量。",
+        "本轮为手动串行评测，不包含真实 Firefly III API 调用。"
+      ]
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 0.9529,
+        "stddev": 0.1247,
+        "min": 0.67,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 3.6429,
+        "stddev": 0.3101,
+        "min": 3.2,
+        "max": 4.1
+      },
+      "tokens": {
+        "mean": 2354.2857,
+        "stddev": 230.2069,
+        "min": 2010,
+        "max": 2680
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.95",
+      "time_seconds": "+3.6",
+      "tokens": "+2354"
+    }
+  },
+  "notes": [
+    "This benchmark is based on one manual inline run per eval and has no old_skill/without_skill baseline."
+  ]
+}

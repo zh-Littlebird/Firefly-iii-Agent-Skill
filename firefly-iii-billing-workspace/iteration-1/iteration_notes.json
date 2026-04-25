@@ -1,0 +1,11 @@
+{
+  "iteration": 1,
+  "mode": "manual-inline-evaluation",
+  "skill_name": "firefly-iii-billing",
+  "created_at": "2026-04-19T02:32:29.625499+00:00",
+  "notes": [
+    "本轮按 skill-creator 的无子代理/串行流程执行。",
+    "每条 eval 只有 with_skill 结果，没有 old_skill 基线对照。",
+    "重点验证技能分流、命令用法、确认策略和高风险流程控制。"
+  ]
+}
