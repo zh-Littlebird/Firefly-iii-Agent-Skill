@@ -1218,6 +1218,9 @@ if __name__ == "__main__":
     elif action == "account-get" and len(sys.argv) >= 3:
         print(json.dumps(client.get_account(sys.argv[2])))
     elif action == "account-create" and len(sys.argv) >= 3:
+        if not client.config["FIREFLY_III_AUTO_CREATE_ACCOUNTS"]:
+            print(json.dumps({"error": True, "message": "Account creation is disabled. Set FIREFLY_III_AUTO_CREATE_ACCOUNTS=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_account(sys.argv[2])))
     elif action == "account-update" and len(sys.argv) >= 4:
         print(json.dumps(client.update_account(sys.argv[2], sys.argv[3])))
@@ -1228,6 +1231,9 @@ if __name__ == "__main__":
     elif action == "category-get" and len(sys.argv) >= 3:
         print(json.dumps(client.get_category(sys.argv[2])))
     elif action == "category-create" and len(sys.argv) >= 3:
+        if not client.config["FIREFLY_III_AUTO_CREATE_CATEGORIES"]:
+            print(json.dumps({"error": True, "message": "Category creation is disabled. Set FIREFLY_III_AUTO_CREATE_CATEGORIES=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_category(sys.argv[2])))
     elif action == "category-update" and len(sys.argv) >= 4:
         print(json.dumps(client.update_category(sys.argv[2], sys.argv[3])))
@@ -1238,6 +1244,9 @@ if __name__ == "__main__":
     elif action == "tag-get" and len(sys.argv) >= 3:
         print(json.dumps(client.get_tag(sys.argv[2])))
     elif action == "tag-create" and len(sys.argv) >= 3:
+        if not client.config["FIREFLY_III_AUTO_CREATE_TAGS"]:
+            print(json.dumps({"error": True, "message": "Tag creation is disabled. Set FIREFLY_III_AUTO_CREATE_TAGS=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_tag(sys.argv[2])))
     elif action == "tag-update" and len(sys.argv) >= 4:
         print(json.dumps(client.update_tag_payload(sys.argv[2], sys.argv[3])))
@@ -1253,6 +1262,9 @@ if __name__ == "__main__":
     elif action == "budget-get" and len(sys.argv) >= 3:
         print(json.dumps(client.get_budget(sys.argv[2])))
     elif action == "budget-create" and len(sys.argv) >= 3:
+        if not client.config["FIREFLY_III_AUTO_CREATE_BUDGETS"]:
+            print(json.dumps({"error": True, "message": "Budget creation is disabled. Set FIREFLY_III_AUTO_CREATE_BUDGETS=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_budget(sys.argv[2])))
     elif action == "budget-update" and len(sys.argv) >= 4:
         print(json.dumps(client.update_budget(sys.argv[2], sys.argv[3])))
@@ -1273,6 +1285,9 @@ if __name__ == "__main__":
     elif action == "budget-limit-get" and len(sys.argv) >= 4:
         print(json.dumps(client.get_budget_limit(sys.argv[2], sys.argv[3])))
     elif action == "budget-limit-create" and len(sys.argv) >= 4:
+        if not client.config["FIREFLY_III_AUTO_CREATE_BUDGETS"]:
+            print(json.dumps({"error": True, "message": "Budget limit creation is disabled. Set FIREFLY_III_AUTO_CREATE_BUDGETS=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_budget_limit(sys.argv[2], sys.argv[3])))
     elif action == "budget-limit-update" and len(sys.argv) >= 5:
         print(json.dumps(client.update_budget_limit(sys.argv[2], sys.argv[3], sys.argv[4])))
@@ -1323,6 +1338,9 @@ if __name__ == "__main__":
     elif action == "piggybank-get" and len(sys.argv) >= 3:
         print(json.dumps(client.get_piggy_bank(sys.argv[2])))
     elif action == "piggybank-create" and len(sys.argv) >= 3:
+        if not client.config["FIREFLY_III_AUTO_CREATE_PIGGY_BANKS"]:
+            print(json.dumps({"error": True, "message": "Piggy bank creation is disabled. Set FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=true in config.json to enable."}))
+            sys.exit(1)
         print(json.dumps(client.create_piggy_bank(sys.argv[2])))
     elif action == "piggybank-update" and len(sys.argv) >= 4:
         print(json.dumps(client.update_piggy_bank(sys.argv[2], sys.argv[3])))

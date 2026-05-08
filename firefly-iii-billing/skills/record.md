@@ -91,7 +91,12 @@ python3 scripts/firefly_client.py list
    - 若 `FIREFLY_III_AUTO_CREATE_TAGS=false`，必须从已有标签列表中选择；没有匹配项时向用户展示现有标签并请其指定
 
 10. **备注（Notes）**
-    - 固定格式：`Auto-synced by Clawdbot from [text/image]`
+    - 必须保留来源标记：`Auto-synced by Clawdbot from [text/image]`
+    - 尽量在备注中记录用户购买的东西或可识别的商品/服务明细，尤其是超市、外卖、电商、药店、便利店、发票/收据截图等场景
+    - 推荐格式：`Auto-synced by Clawdbot from [text/image]\nItems: 商品A、商品B、服务C`
+    - 如果能识别数量、规格或单价，可以简洁追加，例如：`Items: 牛奶 2盒、面包 1袋、纸巾`
+    - 如果只知道消费项目但没有明细，也要写入概括项，例如：`Items: 打车`、`Items: 午餐`、`Items: 电影票`
+    - 如果确实无法判断购买内容，只保留来源标记，不要编造商品
 
 ## 步骤 3：用户确认
 
@@ -103,6 +108,13 @@ python3 scripts/firefly_client.py list
 - 必须展示识别结果供用户确认
 - 没有看清金额、商户、日期或支付方式时，不要猜
 - 如果图片中缺少精确时间，但日期和其余字段清楚，先明确告知“时间仍需你确认”再继续
+
+**确认信息完整性规则**：
+- 确认信息必须展示即将提交到 Firefly III 的完整交易字段，不要只给摘要
+- 单笔和多笔确认都必须包含：类型、金额、日期时间、描述、源账户、目标账户、预算、分类、标签、备注
+- 备注必须展示完整 `notes` 内容，包括 `Auto-synced by Clawdbot from [text/image]` 和可识别的 `Items: ...`
+- 如果某字段为空或不适用，也要显式显示 `无` 或 `不适用`，不要省略字段
+- 多笔交易时，每一笔都要展示自己的完整字段；不要只在总标题或第一笔里展示公共字段
 
 确认格式示例（单笔）：
 
@@ -120,6 +132,7 @@ python3 scripts/firefly_client.py list
 | 预算 | 预算名称 |
 | 分类 | 分类名称 |
 | 标签 | 标签名称 |
+| 备注 | Auto-synced by Clawdbot from text<br>Items: 商品或服务明细 |
 
 确认记账？
 ```
@@ -132,10 +145,12 @@ python3 scripts/firefly_client.py list
 1. 支出 ￥XX.XX · 20XX-XX-XX XX:XX
    商品描述 | 信用卡-XX银行 → XX便利店
    分类: 分类名称 · 预算: 预算名称 · 标签: 标签名称
+   备注: Auto-synced by Clawdbot from text; Items: 商品或服务明细
 
 2. 支出 ￥XX.XX · 20XX-XX-XX XX:XX
    打车描述 | XX钱包 → XX出行
    分类: 分类名称 · 预算: 预算名称 · 标签: 标签名称
+   备注: Auto-synced by Clawdbot from text; Items: 打车
 
 确认记账？
 ```
@@ -144,6 +159,7 @@ python3 scripts/firefly_client.py list
 - 单笔交易：使用表格格式，字段完整清晰
 - 多笔交易：使用紧凑行格式，便于快速浏览
 - 多笔时在标题显示笔数和合计金额（仅合计同币种同类型）
+- 紧凑格式也不能省略字段；如果行太长，可以分多行展示字段
 
 ## 步骤 4：提交交易
 
@@ -170,3 +186,9 @@ python3 scripts/firefly_client.py post <FILE_PATH>
 ## 步骤 5：最终汇报
 
 成功提交后，向用户展示所有交易的详细信息供最终核对。
+
+**最终汇报完整性规则**：
+- 必须展示每笔交易的 ID 以及完整字段：类型、金额、日期时间、描述、源账户、目标账户、预算、分类、标签、备注
+- 备注必须展示完整 `notes` 内容；不要因为它不是 Firefly III 列表页常见字段就省略
+- 如果 Firefly III 返回体中缺少某个字段，但该字段存在于提交 payload 中，用提交 payload 的值回填展示，并注明这是“提交值”
+- 如果 Firefly III 规则自动改写了分类、标签、预算或备注，优先展示 Firefly III 返回值，并指出与提交值不同

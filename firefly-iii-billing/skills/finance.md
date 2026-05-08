@@ -32,7 +32,7 @@ python3 scripts/firefly_client.py piggybanks
 # 详情
 python3 scripts/firefly_client.py piggybank-get <PIGGY_BANK_ID>
 
-# 创建
+# 创建（仅当 FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=true 时允许）
 python3 scripts/firefly_client.py piggybank-create '<JSON_DATA>'
 
 # 更新
@@ -44,8 +44,9 @@ python3 scripts/firefly_client.py piggybank-delete <PIGGY_BANK_ID>
 
 查看所有存钱罐，支持储蓄目标场景（如"往旅行基金存了500"）。
 
-`FIREFLY_III_AUTO_CREATE_PIGGY_BANKS` 约束的是交易/归属流程里的隐式自动新建，不拦截用户明确要求的显式创建。
-若 `FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=false`，在涉及存钱罐归属或选择时，必须先调用 `piggybanks` 或 `autocomplete piggy-banks` 读取已有列表，并从现有存钱罐中选择；无匹配项时向用户展示现有选项，而不是继续隐式创建。
+**存钱罐创建限制**：`piggybank-create` 仅在 `config.json` 中 `FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=true` 时允许使用。若该配置为 `false`，agent 必须拒绝执行此命令，引导用户从已有存钱罐列表中选择或修改配置。
+
+若 `FIREFLY_III_AUTO_CREATE_PIGGY_BANKS=false`，在涉及存钱罐归属或选择时，必须先调用 `piggybanks` 或 `autocomplete piggy-banks` 读取已有列表，并从现有存钱罐中选择；无匹配项时向用户展示现有选项，而不是继续创建。
 
 ## 标签管理
 
