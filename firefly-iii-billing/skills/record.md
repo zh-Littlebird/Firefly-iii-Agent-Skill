@@ -171,6 +171,8 @@ python3 scripts/firefly_client.py post '<JSON_DATA>'
 python3 scripts/firefly_client.py post <FILE_PATH>
 ```
 
+`JSON_DATA` 传给 CLI 时，顶层必须是“单个 transaction 对象”或“transaction 对象数组”。不要把它再包成 `{"transactions":[...]}`；CLI 会自行生成 Firefly III API 需要的外层 `transactions` 对象。
+
 **提交策略**：
 
 - **默认逐笔提交**：多笔独立交易时，对每笔交易分别调用一次 `post` 命令，每次提交的 JSON 中只包含**一个** transaction 对象，确保每笔交易独立存储、独立管理

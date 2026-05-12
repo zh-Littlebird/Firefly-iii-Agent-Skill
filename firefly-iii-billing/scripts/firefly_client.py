@@ -485,6 +485,17 @@ class FireflyClient:
                 return json.load(f)
         return json.loads(data_str_or_file)
 
+    def _reject_wrapped_transaction_payload(self, payload, action):
+        if isinstance(payload, dict) and "transactions" in payload:
+            return self._policy_error(
+                "transactions",
+                f"Invalid {action} payload: do not wrap the CLI input in a top-level "
+                "'transactions' object. Pass one transaction object or an array of "
+                "transaction objects; scripts/firefly_client.py wraps it for Firefly III.",
+                code="INVALID_TRANSACTION_PAYLOAD"
+            )
+        return None
+
     # ── Metadata ──
 
     def list_metadata(self):
@@ -513,6 +524,9 @@ class FireflyClient:
 
     def post_transactions(self, data_str_or_file):
         payload = self._parse_payload(data_str_or_file)
+        shape_error = self._reject_wrapped_transaction_payload(payload, "post")
+        if shape_error:
+            return shape_error
         if isinstance(payload, dict):
             payload = [payload]
         return self._request("POST", "transactions", data={
@@ -528,6 +542,9 @@ class FireflyClient:
 
     def update_transaction(self, transaction_id, data_str_or_file):
         payload = self._parse_payload(data_str_or_file)
+        shape_error = self._reject_wrapped_transaction_payload(payload, "update")
+        if shape_error:
+            return shape_error
         if isinstance(payload, dict):
             payload = [payload]
         return self._request("PUT", f"transactions/{transaction_id}", data={
