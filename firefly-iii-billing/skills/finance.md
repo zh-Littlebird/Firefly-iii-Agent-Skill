@@ -24,6 +24,8 @@ python3 scripts/firefly_client.py bill-delete <BILL_ID>
 
 查看所有账单，支持周期性支出（房租、会员费、保险等）关联。
 
+> **注意**：账单创建不受自动新建开关限制。账单始终是用户明确发起的操作，不会在记账流程中被隐式创建，因此无需 `FIREFLY_III_AUTO_CREATE_BILLS` 开关。
+
 ## 存钱罐管理
 
 ```bash
@@ -50,29 +52,7 @@ python3 scripts/firefly_client.py piggybank-delete <PIGGY_BANK_ID>
 
 ## 标签管理
 
-标签已升级为主数据管理能力，优先加载 `skills/masterdata.md`。
-
-如需仅通过 Python API 操作，也可使用：
-
-`FIREFLY_III_AUTO_CREATE_TAGS` 约束的是交易流程里的隐式自动新建。
-若 `FIREFLY_III_AUTO_CREATE_TAGS=false`，必须先读取现有标签列表，再从已有标签中选择或让用户指定现有标签；不能在交易 payload 中直接提交新的标签名。
-
-```python
-from scripts.firefly_client import FireflyClient
-client = FireflyClient.from_config()
-
-# 获取所有标签
-client.get_tags()
-
-# 获取单个标签
-client.get_tag(tag_id)
-
-# 更新标签
-client.update_tag(tag_id, data)
-
-# 仅更新标签描述
-client.update_tag_description(tag_id, "new description")
-```
+标签已升级为主数据管理能力，请加载 `skills/masterdata.md` 中的标签部分进行操作。
 
 ## 附件上传
 

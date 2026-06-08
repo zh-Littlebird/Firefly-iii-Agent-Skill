@@ -93,24 +93,15 @@ python3 scripts/firefly_client.py insight income tag 2026-04-01 2026-04-18 - 1,2
 python3 scripts/firefly_client.py insight transfer total 2026-04-01 2026-04-18
 ```
 
-## 支出分类洞察
+## 支出分类洞察（已废弃，请使用 `insight expense category`）
+
+> **已废弃**：此命令功能已被通用 `insight` 命令完全覆盖，等价于 `insight expense category`。新场景请直接使用通用 `insight` 命令。
 
 ```bash
 python3 scripts/firefly_client.py insight-expense-category <START> <END> [CATEGORY_IDS] [ACCOUNT_IDS]
+# 等价于：
+python3 scripts/firefly_client.py insight expense category <START> <END> [CATEGORY_IDS] [ACCOUNT_IDS]
 ```
-
-对应接口：
-- `GET /v1/insight/expense/category`
-
-适用场景：
-- “钱花去哪了”
-- “这月餐饮/交通/购物分别花了多少”
-- 首页分类占比和分类排行榜
-
-使用规则：
-- 优先使用这个接口，而不是先拉全量交易再本地按分类汇总
-- 如需补充解释，再回查 `transactions`
-- 新场景优先使用通用 `insight` 命令；这里保留是为了兼容已有调用方式
 
 ## 预算列表
 
@@ -154,31 +145,23 @@ python3 scripts/firefly_client.py available-budget-get <AVAILABLE_BUDGET_ID>
 python3 scripts/firefly_client.py budget-limits <START> <END>
 python3 scripts/firefly_client.py budget-limit-list <BUDGET_ID> [START] [END]
 python3 scripts/firefly_client.py budget-limit-get <BUDGET_ID> <LIMIT_ID>
-python3 scripts/firefly_client.py budget-limit-create <BUDGET_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-limit-update <BUDGET_ID> <LIMIT_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-limit-delete <BUDGET_ID> <LIMIT_ID>
 ```
 
 对应接口：
 - `GET /v1/budget-limits`
 - `GET /v1/budgets/{id}/limits`
 - `GET /v1/budgets/{id}/limits/{limitId}`
-- `POST /v1/budgets/{id}/limits`
-- `PUT /v1/budgets/{id}/limits/{limitId}`
-- `DELETE /v1/budgets/{id}/limits/{limitId}`
 
 适用场景：
 - “预算上限是多少”
 - “还剩多少预算”
 - “哪些预算已经超支”
-- “给某个预算补一条新月份额度”
-- “修正某条预算额度备注/金额/时间范围”
 
 说明：
 - 预算分析时，`budgets` 和 `budget-limits` 必须结合看
-- `budgets` 解决“花了多少”，`budget-limits` 解决“额度是多少”
-- `budget-limit-list` / `budget-limit-get` 解决“这个预算具体有哪些额度分段”
-- `budget-limit-create/update/delete` 用于显式维护预算额度，不要再绕回主预算对象
+- `budgets` 解决”花了多少”，`budget-limits` 解决”额度是多少”
+- `budget-limit-list` / `budget-limit-get` 解决”这个预算具体有哪些额度分段”
+- 预算额度的创建、更新、删除属于主数据维护，请使用 `skills/masterdata.md` 中的预算额度命令
 
 ## 预算交易闭环
 

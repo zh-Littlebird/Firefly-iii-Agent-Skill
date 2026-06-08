@@ -78,106 +78,106 @@ firefly-iii-billing/
 
 ```bash
 # 获取记账元数据
-python3 scripts/firefly_client.py list <TOKEN>
+python3 scripts/firefly_client.py list
 
 # 按时间范围列出交易
-python3 scripts/firefly_client.py transactions <TOKEN> [START] [END] [TYPE]
+python3 scripts/firefly_client.py transactions [START] [END] [TYPE]
 
 # 提交交易
-python3 scripts/firefly_client.py post <TOKEN> '<JSON_DATA>'
+python3 scripts/firefly_client.py post '<JSON_DATA>'
 
 # 查看交易详情
-python3 scripts/firefly_client.py get <TOKEN> <TRANSACTION_ID>
+python3 scripts/firefly_client.py get <TRANSACTION_ID>
 
 # 更新交易
-python3 scripts/firefly_client.py update <TOKEN> <TRANSACTION_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py update <TRANSACTION_ID> '<JSON_DATA>'
 
 # 删除交易
-python3 scripts/firefly_client.py delete <TOKEN> <TRANSACTION_ID>
+python3 scripts/firefly_client.py delete <TRANSACTION_ID>
 
 # 搜索交易
-python3 scripts/firefly_client.py search <TOKEN> '<QUERY>'
+python3 scripts/firefly_client.py search '<QUERY>'
 
 # 批量更新交易（仅支持 account_id -> account_id）
-python3 scripts/firefly_client.py bulk-update <TOKEN> '<JSON_DATA>'
+python3 scripts/firefly_client.py bulk-update '<JSON_DATA>'
 
 # 列出账户
-python3 scripts/firefly_client.py accounts <TOKEN> [TYPE]
+python3 scripts/firefly_client.py accounts [TYPE]
 
 # 账户主数据 CRUD
-python3 scripts/firefly_client.py account-get <TOKEN> <ACCOUNT_ID>
-python3 scripts/firefly_client.py account-create <TOKEN> '<JSON_DATA>'
-python3 scripts/firefly_client.py account-update <TOKEN> <ACCOUNT_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py account-delete <TOKEN> <ACCOUNT_ID>
+python3 scripts/firefly_client.py account-get <ACCOUNT_ID>
+python3 scripts/firefly_client.py account-create '<JSON_DATA>'
+python3 scripts/firefly_client.py account-update <ACCOUNT_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py account-delete <ACCOUNT_ID>
 
 # 分类主数据 CRUD
-python3 scripts/firefly_client.py categories <TOKEN>
-python3 scripts/firefly_client.py category-get <TOKEN> <CATEGORY_ID>
-python3 scripts/firefly_client.py category-create <TOKEN> '<JSON_DATA>'
-python3 scripts/firefly_client.py category-update <TOKEN> <CATEGORY_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py category-delete <TOKEN> <CATEGORY_ID>
+python3 scripts/firefly_client.py categories
+python3 scripts/firefly_client.py category-get <CATEGORY_ID>
+python3 scripts/firefly_client.py category-create '<JSON_DATA>'
+python3 scripts/firefly_client.py category-update <CATEGORY_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py category-delete <CATEGORY_ID>
 
 # 标签主数据 CRUD
-python3 scripts/firefly_client.py tags <TOKEN>
-python3 scripts/firefly_client.py tag-get <TOKEN> <TAG_OR_ID>
-python3 scripts/firefly_client.py tag-create <TOKEN> '<JSON_DATA>'
-python3 scripts/firefly_client.py tag-update <TOKEN> <TAG_OR_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py tag-delete <TOKEN> <TAG_OR_ID>
+python3 scripts/firefly_client.py tags
+python3 scripts/firefly_client.py tag-get <TAG_OR_ID>
+python3 scripts/firefly_client.py tag-create '<JSON_DATA>'
+python3 scripts/firefly_client.py tag-update <TAG_OR_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py tag-delete <TAG_OR_ID>
 
 # 基础汇总
-python3 scripts/firefly_client.py summary <TOKEN> <START> <END> [CURRENCY_CODE]
+python3 scripts/firefly_client.py summary <START> <END> [CURRENCY_CODE]
 
 # 列出预算及已花金额
-python3 scripts/firefly_client.py budgets <TOKEN> [START] [END]
+python3 scripts/firefly_client.py budgets [START] [END]
 
 # 预算主数据 CRUD
-python3 scripts/firefly_client.py budget-get <TOKEN> <BUDGET_ID>
-python3 scripts/firefly_client.py budget-create <TOKEN> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-update <TOKEN> <BUDGET_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-delete <TOKEN> <BUDGET_ID>
+python3 scripts/firefly_client.py budget-get <BUDGET_ID>
+python3 scripts/firefly_client.py budget-create '<JSON_DATA>'
+python3 scripts/firefly_client.py budget-update <BUDGET_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py budget-delete <BUDGET_ID>
 
 # 列出可用预算余额/周期
-python3 scripts/firefly_client.py available-budgets <TOKEN> [START] [END]
-python3 scripts/firefly_client.py available-budget-get <TOKEN> <AVAILABLE_BUDGET_ID>
+python3 scripts/firefly_client.py available-budgets [START] [END]
+python3 scripts/firefly_client.py available-budget-get <AVAILABLE_BUDGET_ID>
 
 # 列出预算额度
-python3 scripts/firefly_client.py budget-limits <TOKEN> <START> <END>
+python3 scripts/firefly_client.py budget-limits <START> <END>
 
 # 预算额度明细 CRUD
-python3 scripts/firefly_client.py budget-limit-list <TOKEN> <BUDGET_ID> [START] [END]
-python3 scripts/firefly_client.py budget-limit-get <TOKEN> <BUDGET_ID> <LIMIT_ID>
-python3 scripts/firefly_client.py budget-limit-create <TOKEN> <BUDGET_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-limit-update <TOKEN> <BUDGET_ID> <LIMIT_ID> '<JSON_DATA>'
-python3 scripts/firefly_client.py budget-limit-delete <TOKEN> <BUDGET_ID> <LIMIT_ID>
+python3 scripts/firefly_client.py budget-limit-list <BUDGET_ID> [START] [END]
+python3 scripts/firefly_client.py budget-limit-get <BUDGET_ID> <LIMIT_ID>
+python3 scripts/firefly_client.py budget-limit-create <BUDGET_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py budget-limit-update <BUDGET_ID> <LIMIT_ID> '<JSON_DATA>'
+python3 scripts/firefly_client.py budget-limit-delete <BUDGET_ID> <LIMIT_ID>
 
 # 预算相关交易明细
-python3 scripts/firefly_client.py budget-transactions <TOKEN> <BUDGET_ID> [START] [END] [TYPE]
-python3 scripts/firefly_client.py budget-limit-transactions <TOKEN> <BUDGET_ID> <LIMIT_ID>
-python3 scripts/firefly_client.py transactions-without-budget <TOKEN> [START] [END] [TYPE]
+python3 scripts/firefly_client.py budget-transactions <BUDGET_ID> [START] [END] [TYPE]
+python3 scripts/firefly_client.py budget-limit-transactions <BUDGET_ID> <LIMIT_ID>
+python3 scripts/firefly_client.py transactions-without-budget [START] [END] [TYPE]
 
 # 账户余额趋势
-python3 scripts/firefly_client.py chart-account <TOKEN> <START> <END> [PERIOD]
+python3 scripts/firefly_client.py chart-account <START> <END> [PERIOD]
 
 # 支出分类洞察
-python3 scripts/firefly_client.py insight-expense-category <TOKEN> <START> <END>
+python3 scripts/firefly_client.py insight-expense-category <START> <END>
 
 # 自动补全（Phase 2）
-python3 scripts/firefly_client.py autocomplete <TOKEN> <RESOURCE_TYPE> '<QUERY>'
+python3 scripts/firefly_client.py autocomplete <RESOURCE_TYPE> '<QUERY>'
 
 # 查看账单（Phase 2）
-python3 scripts/firefly_client.py bills <TOKEN>
+python3 scripts/firefly_client.py bills
 
 # 查看存钱罐（Phase 2）
-python3 scripts/firefly_client.py piggybanks <TOKEN>
+python3 scripts/firefly_client.py piggybanks
 
 # 查询净资产便捷包装（Phase 2）
-python3 scripts/firefly_client.py networth <TOKEN> [YYYY-MM-DD] [CURRENCY_CODE]
+python3 scripts/firefly_client.py networth [YYYY-MM-DD] [CURRENCY_CODE]
 
 # 月度资金变动报告，本地聚合（Phase 2）
-python3 scripts/firefly_client.py report <TOKEN> [YYYY-MM]
+python3 scripts/firefly_client.py report [YYYY-MM]
 
 # 多期净增长趋势，本地聚合（Phase 2）
-python3 scripts/firefly_client.py trend <TOKEN> [monthly|quarterly|yearly] [期数]
+python3 scripts/firefly_client.py trend [monthly|quarterly|yearly] [期数]
 ```
 
 ## Python API 用法

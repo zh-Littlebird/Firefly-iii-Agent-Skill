@@ -45,6 +45,13 @@ class FireflyClient:
         "category": "categories[]",
         "tag": "tags[]",
     }
+    RESOURCE_CREATE_CONFIGS = {
+        "accounts": "FIREFLY_III_AUTO_CREATE_ACCOUNTS",
+        "categories": "FIREFLY_III_AUTO_CREATE_CATEGORIES",
+        "tags": "FIREFLY_III_AUTO_CREATE_TAGS",
+        "budgets": "FIREFLY_III_AUTO_CREATE_BUDGETS",
+        "piggy-banks": "FIREFLY_III_AUTO_CREATE_PIGGY_BANKS",
+    }
 
     def __init__(self, base_url, token, config=None):
         self.base_url = base_url.rstrip('/') + '/api/v1'
@@ -409,6 +416,14 @@ class FireflyClient:
         if endpoint.startswith("data/bulk/transactions") and method == "POST" and data:
             return self._ensure_bulk_transaction_update_allowed(data)
 
+        if method == "POST":
+            config_key = self.RESOURCE_CREATE_CONFIGS.get(root)
+            if config_key and not self.config.get(config_key, True):
+                return self._policy_error(
+                    root,
+                    f"Auto-create disabled: direct creation of {root} is not allowed.",
+                )
+
         return None
 
     # ── Core request helpers ──
@@ -529,13 +544,15 @@ class FireflyClient:
             return shape_error
         if isinstance(payload, dict):
             payload = [payload]
-        return self._request("POST", "transactions", data={
+        request_data = {
             "error_if_duplicate_hash": False,
             "apply_rules": True,
             "fire_webhooks": True,
-            "group_title": "Imported via Clawdbot",
-            "transactions": payload
-        })
+            "transactions": payload,
+        }
+        if len(payload) > 1:
+            request_data["group_title"] = "Imported via Clawdbot"
+        return self._request("POST", "transactions", data=request_data)
 
     def get_transaction(self, transaction_id):
         return self._request("GET", f"transactions/{transaction_id}")
